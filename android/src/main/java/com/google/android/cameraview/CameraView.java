@@ -80,6 +80,7 @@ public class CameraView extends FrameLayout {
 
     private boolean mAdjustViewBounds;
 
+    private boolean mUseCamera2Api = false;
     private Context mContext;
 
     private final DisplayOrientationDetector mDisplayOrientationDetector;
@@ -122,6 +123,8 @@ public class CameraView extends FrameLayout {
             }
         };
     }
+
+
 
     @NonNull
     private PreviewImpl createPreviewImpl(Context context) {
@@ -241,7 +244,9 @@ public class CameraView extends FrameLayout {
         setZoom(ss.zoom);
         setWhiteBalance(ss.whiteBalance);
         setScanning(ss.scanning);
-        setPictureSize(ss.pictureSize);
+        if (  ss.pictureSize != null ) {
+            setPictureSize(ss.pictureSize);
+        }
     }
 
     public void setUsingCamera2Api(boolean useCamera2) {
@@ -251,8 +256,9 @@ public class CameraView extends FrameLayout {
 
         boolean wasOpened = isCameraOpened();
         Parcelable state = onSaveInstanceState();
-
+        this.mUseCamera2Api =useCamera2;
         if (useCamera2) {
+
             if (wasOpened) {
                 stop();
             }
@@ -262,6 +268,7 @@ public class CameraView extends FrameLayout {
                 mImpl = new Camera2Api23(mCallbacks, mImpl.mPreview, mContext);
             }
         } else {
+
             if (mImpl instanceof Camera1) {
                 return;
             }
@@ -290,6 +297,7 @@ public class CameraView extends FrameLayout {
             Parcelable state=onSaveInstanceState();
             // Camera2 uses legacy hardware layer; fall back to Camera1
             mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
+
             onRestoreInstanceState(state);
             mImpl.start();
         }

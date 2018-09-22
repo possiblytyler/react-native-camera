@@ -66,7 +66,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
 
     Camera mCamera;
 
-    private Camera.Parameters mCameraParameters;
+    public Camera.Parameters mCameraParameters;
 
     private final Camera.CameraInfo mCameraInfo = new Camera.CameraInfo();
 

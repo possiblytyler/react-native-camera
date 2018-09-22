@@ -16,7 +16,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
-
+import com.google.android.cameraview.Size;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -31,13 +31,15 @@ public class ResolveTakenPictureAsyncTask extends AsyncTask<Void, Void, Writable
     private File mCacheDirectory;
     private Bitmap mBitmap;
     private PictureSavedDelegate mPictureSavedDelegate;
+    private Size mPreviewSize;
 
-    public ResolveTakenPictureAsyncTask(byte[] imageData, Promise promise, ReadableMap options, File cacheDirectory, PictureSavedDelegate delegate) {
+    public ResolveTakenPictureAsyncTask(byte[] imageData, Promise promise, ReadableMap options, File cacheDirectory, PictureSavedDelegate delegate, Size previewSize) {
         mPromise = promise;
         mOptions = options;
         mImageData = imageData;
         mCacheDirectory = cacheDirectory;
         mPictureSavedDelegate = delegate;
+        mPreviewSize = previewSize;
     }
 
     private int getQuality() {
@@ -82,6 +84,9 @@ public class ResolveTakenPictureAsyncTask extends AsyncTask<Void, Void, Writable
 
         try {
             if (inputStream != null) {
+
+
+
                 ExifInterface exifInterface = new ExifInterface(inputStream);
                 // Get orientation of the image from mImageData via inputStream
                 int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
@@ -105,6 +110,16 @@ public class ResolveTakenPictureAsyncTask extends AsyncTask<Void, Void, Writable
                     WritableMap exifData = RNCameraViewHelper.getExifData(exifInterface);
                     response.putMap("exif", exifData);
                 }
+
+                //Crop to preview
+                if (mOptions.hasKey("aspectRatio")) {
+                     double ratio =  mOptions.getDouble("aspectRatio");
+                    //float ratio = (float)mPreviewSize.getWidth() / (float)mPreviewSize.getHeight();
+                    mBitmap = cropBitmap(mBitmap, ratio);
+
+                }
+
+
             }
 
             // Upon rotating, write the image's dimensions to the response
@@ -166,6 +181,16 @@ public class ResolveTakenPictureAsyncTask extends AsyncTask<Void, Void, Writable
         float scaleRatio = (float) newWidth / (float) width;
 
         return Bitmap.createScaledBitmap(bm, newWidth, (int) (height * scaleRatio), true);
+    }
+
+    private Bitmap cropBitmap(Bitmap bm, double ratio) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        double ratioHeight = (width / ratio);
+
+        int offsetY = (int)( (height) - ratioHeight ) / 2;
+
+        return Bitmap.createBitmap(bm, 0, offsetY, width, (int ) (ratioHeight), null, true );
     }
 
     private Bitmap flipHorizontally(Bitmap source) {
